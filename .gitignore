@@ -1,0 +1,60 @@
+# ==============================
+# DONUTS - Git Ignore
+# ==============================
+
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment / secret files
+.env
+.env.*
+!.env.example
+
+# VS Code
+.vscode/
+
+# Other IDE files
+.idea/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Python logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# =================================
+# DONUTS generated / large data
+# =================================
+
+# Raw datasets
+data/raw/
+
+# Recorded videos
+data/videos/
+
+# Large ML model weights
+models/weights/
+
+# Model checkpoints
+*.pt
+*.pth
+*.onnx
+
+# =================================
+# Temporary calibration files
+# =================================
+
+*.npz
+*.npy
