@@ -1,0 +1,25 @@
+{
+    "experiment_name": "Bottle Transfer",
+    "steps": [
+        {
+            "id": 1,
+            "activity": "APPROACHING",
+            "name": "APPROACH BOTTLE"
+        },
+        {
+            "id": 2,
+            "activity": "PICKED",
+            "name": "PICK BOTTLE"
+        },
+        {
+            "id": 3,
+            "activity": "MOVING",
+            "name": "MOVE BOTTLE"
+        },
+        {
+            "id": 4,
+            "activity": "RELEASED",
+            "name": "RELEASE BOTTLE"
+        }
+    ]
+}

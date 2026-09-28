@@ -1,0 +1,110 @@
+{
+    "experiment": "Bottle Transfer",
+    "start_time": "2026-09-20T19:13:47.722945",
+    "end_time": "2026-09-20T19:14:25.351689",
+    "status": "COMPLETED",
+    "events": [
+        {
+            "timestamp": "2026-09-20T19:13:52.417108",
+            "activity": "APPROACHING",
+            "status": "OK",
+            "message": "APPROACHING accepted"
+        },
+        {
+            "timestamp": "2026-09-20T19:13:52.810582",
+            "activity": "PICKED",
+            "status": "OK",
+            "message": "PICKED accepted"
+        },
+        {
+            "timestamp": "2026-09-20T19:13:53.625158",
+            "activity": "MOVING",
+            "status": "OK",
+            "message": "MOVING accepted"
+        },
+        {
+            "timestamp": "2026-09-20T19:13:53.957644",
+            "activity": "RELEASED",
+            "status": "COMPLETE",
+            "message": "Experiment completed successfully"
+        },
+        {
+            "timestamp": "2026-09-20T19:13:54.392513",
+            "activity": "APPROACHING",
+            "status": "OK",
+            "message": "APPROACHING accepted"
+        },
+        {
+            "timestamp": "2026-09-20T19:13:54.729315",
+            "activity": "PICKED",
+            "status": "OK",
+            "message": "PICKED accepted"
+        },
+        {
+            "timestamp": "2026-09-20T19:14:00.226920",
+            "activity": "MOVING",
+            "status": "OK",
+            "message": "MOVING accepted"
+        },
+        {
+            "timestamp": "2026-09-20T19:14:02.112619",
+            "activity": "RELEASED",
+            "status": "COMPLETE",
+            "message": "Experiment completed successfully"
+        },
+        {
+            "timestamp": "2026-09-20T19:14:08.580312",
+            "activity": "APPROACHING",
+            "status": "OK",
+            "message": "APPROACHING accepted"
+        },
+        {
+            "timestamp": "2026-09-20T19:14:09.224285",
+            "activity": "PICKED",
+            "status": "OK",
+            "message": "PICKED accepted"
+        },
+        {
+            "timestamp": "2026-09-20T19:14:17.734673",
+            "activity": "MOVING",
+            "status": "OK",
+            "message": "MOVING accepted"
+        },
+        {
+            "timestamp": "2026-09-20T19:14:18.063441",
+            "activity": "RELEASED",
+            "status": "COMPLETE",
+            "message": "Experiment completed successfully"
+        },
+        {
+            "timestamp": "2026-09-20T19:14:18.299391",
+            "activity": "APPROACHING",
+            "status": "OK",
+            "message": "APPROACHING accepted"
+        },
+        {
+            "timestamp": "2026-09-20T19:14:18.635450",
+            "activity": "PICKED",
+            "status": "OK",
+            "message": "PICKED accepted"
+        },
+        {
+            "timestamp": "2026-09-20T19:14:21.676784",
+            "activity": "MOVING",
+            "status": "OK",
+            "message": "MOVING accepted"
+        },
+        {
+            "timestamp": "2026-09-20T19:14:25.350580",
+            "activity": "RELEASED",
+            "status": "COMPLETE",
+            "message": "Experiment completed successfully"
+        },
+        {
+            "timestamp": "2026-09-20T19:14:25.924230",
+            "activity": "APPROACHING",
+            "status": "OK",
+            "message": "APPROACHING accepted"
+        }
+    ]
+}
