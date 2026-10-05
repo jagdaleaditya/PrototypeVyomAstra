@@ -1,0 +1,32 @@
+{
+    "experiment": "Bottle Transfer",
+    "start_time": "2026-10-05T19:40:59.278699",
+    "end_time": "2026-10-05T19:41:03.985290",
+    "status": "COMPLETED",
+    "events": [
+        {
+            "timestamp": "2026-10-05T19:40:59.491942",
+            "activity": "APPROACHING",
+            "status": "OK",
+            "message": "APPROACHING accepted"
+        },
+        {
+            "timestamp": "2026-10-05T19:41:00.160054",
+            "activity": "PICKED",
+            "status": "OK",
+            "message": "PICKED accepted"
+        },
+        {
+            "timestamp": "2026-10-05T19:41:03.526663",
+            "activity": "MOVING",
+            "status": "OK",
+            "message": "MOVING accepted"
+        },
+        {
+            "timestamp": "2026-10-05T19:41:03.984081",
+            "activity": "RELEASED",
+            "status": "COMPLETE",
+            "message": "Experiment completed successfully"
+        }
+    ]
+}

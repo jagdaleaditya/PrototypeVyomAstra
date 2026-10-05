@@ -1,5 +1,6 @@
 {
     "experiment_name": "Bottle Transfer",
+    "enable_rack_relative_pose": false,
     "steps": [
         {
             "id": 1,

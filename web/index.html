@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>DONUTS | AI Experiment Monitor</title>
+
+    <link
+    rel="stylesheet"
+    href="/static/style.css"
+>
+</head>
+
+<body>
+
+    <header class="topbar">
+
+        <div>
+            <h1>DONUTS</h1>
+
+            <p>
+                AI Human Activity Recognition
+                for On-board BAS Experiments
+            </p>
+        </div>
+
+        <div class="connection">
+            <span id="connectionDot"></span>
+            <span id="connectionText">
+                SYSTEM ONLINE
+            </span>
+        </div>
+
+    </header>
+
+
+    <main class="dashboard">
+
+        <!-- CAMERA -->
+
+        <section class="camera-card">
+
+            <div class="card-header">
+                <h2>LIVE CAMERA</h2>
+
+                <span class="live-badge">
+                    LIVE
+                </span>
+            </div>
+
+            <div class="camera-container">
+
+              <video
+    id="camera"
+    autoplay
+    playsinline
+    muted
+></video>
+
+<canvas
+    id="aiCanvas"
+></canvas>
+
+                <div
+                    id="cameraPlaceholder"
+                    class="camera-placeholder"
+                >
+                    <div class="camera-icon">
+                        📷
+                    </div>
+
+                    <h3>Camera Not Started</h3>
+
+                    <p>
+                        Allow camera access to start
+                        the DONUTS experiment.
+                    </p>
+
+                    <button id="startCamera">
+                        START CAMERA
+                    </button>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- EXPERIMENT -->
+
+        <section class="experiment-card">
+
+            <div class="card-header">
+
+                <h2>EXPERIMENT</h2>
+
+                <span id="experimentStatus"
+                      class="status waiting">
+                    READY
+                </span>
+
+            </div>
+
+
+            <div class="experiment-name">
+
+                <span>EXPERIMENT</span>
+
+                <strong>
+                    Bottle Transfer
+                </strong>
+
+            </div>
+
+
+            <!-- STEP PROGRESS -->
+
+            <div class="steps">
+
+                <div
+                    class="step active"
+                    id="step1"
+                >
+                    <div class="step-number">
+                        01
+                    </div>
+
+                    <div>
+                        <strong>APPROACH</strong>
+
+                        <small>
+                            Approach bottle
+                        </small>
+                    </div>
+                </div>
+
+
+                <div
+                    class="step"
+                    id="step2"
+                >
+                    <div class="step-number">
+                        02
+                    </div>
+
+                    <div>
+                        <strong>PICK</strong>
+
+                        <small>
+                            Pick bottle
+                        </small>
+                    </div>
+                </div>
+
+
+                <div
+                    class="step"
+                    id="step3"
+                >
+                    <div class="step-number">
+                        03
+                    </div>
+
+                    <div>
+                        <strong>MOVE</strong>
+
+                        <small>
+                            Move bottle
+                        </small>
+                    </div>
+                </div>
+
+
+                <div
+                    class="step"
+                    id="step4"
+                >
+                    <div class="step-number">
+                        04
+                    </div>
+
+                    <div>
+                        <strong>RELEASE</strong>
+
+                        <small>
+                            Release bottle
+                        </small>
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- CURRENT ACTIVITY -->
+
+            <div class="activity-box">
+
+                <span>
+                    CURRENT ACTIVITY
+                </span>
+
+                <strong id="activity">
+                    WAITING
+                </strong>
+
+            </div>
+
+
+            <!-- NEXT STEP -->
+
+            <div class="next-box">
+
+                <span>
+                    NEXT STEP
+                </span>
+
+                <strong id="nextStep">
+                    APPROACH BOTTLE
+                </strong>
+
+            </div>
+
+
+            <!-- MESSAGE -->
+
+            <div
+                id="message"
+                class="message"
+            >
+                System ready.
+                Start the camera to begin.
+            </div>
+
+
+            <!-- CONTROLS -->
+
+            <div class="controls">
+
+                <button
+                    id="resetButton"
+                    class="secondary-button"
+                >
+                    RESET EXPERIMENT
+                </button>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <footer>
+
+        <span>
+            DONUTS
+        </span>
+
+        <span>
+            Offline AI Experiment Monitoring
+        </span>
+
+    </footer>
+
+
+    <script src="/static/app.js"></script>
+
+</body>
+
+</html>

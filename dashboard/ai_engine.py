@@ -29,10 +29,22 @@ HMR_PATH = os.path.join(
 if HMR_PATH not in sys.path:
     sys.path.insert(0, HMR_PATH)
 
+APP_PATH = os.path.join(PROJECT_ROOT, "app")
+if APP_PATH not in sys.path:
+    sys.path.insert(0, APP_PATH)
 
 from activity_recognition import ActivityRecognizer
 from experiment_controller import ExperimentController
 from event_logger import EventLogger
+from rack_relative_pose import RackRelativePose
+from rack_relative_features import RackRelativeFeatures
+
+# Import AlertManager (graceful fallback if app/ not set up yet)
+try:
+    from alerts.alert_manager import AlertManager
+    _ALERT_MANAGER_AVAILABLE = True
+except ImportError:
+    _ALERT_MANAGER_AVAILABLE = False
 
 
 # ============================================================
@@ -136,6 +148,42 @@ class DonutsAI:
         self.event_logger = EventLogger(
             self.experiment_controller.experiment_name
         )
+
+        # ----------------------------------------------------
+        # ALERT MANAGER (non-blocking voice alerts)
+        # ----------------------------------------------------
+
+        if _ALERT_MANAGER_AVAILABLE:
+            self.alert_manager = AlertManager(
+                voice_enabled=True,
+                cooldown_seconds=5.0,
+                voice_rate=160,
+                voice_volume=1.0,
+            )
+            # Inject into experiment controller so it uses async alerts
+            self.experiment_controller.alert_manager = self.alert_manager
+            print(">>> AlertManager initialized (async voice).")
+        else:
+            self.alert_manager = None
+            print(">>> AlertManager not available — using legacy voice_alert.")
+
+        # ----------------------------------------------------
+        # FEATURE FLAG: RACK RELATIVE POSE
+        # ----------------------------------------------------
+        self.enable_rack_relative_pose = (
+            os.environ.get("DONUTS_ENABLE_RACK_RELATIVE_POSE", "").lower() in ("1", "true", "yes")
+            or self.experiment_controller.config.get("enable_rack_relative_pose", False)
+        )
+
+        self.rack_relative_pose = None
+        if self.enable_rack_relative_pose:
+            try:
+                self.rack_relative_pose = RackRelativePose(visualize=True)
+                print(">>> [FEATURE FLAG ON] RackRelativePose enabled.")
+            except Exception as e:
+                print(f">>> [WARNING] Failed to initialize RackRelativePose: {e}")
+        else:
+            print(">>> [FEATURE FLAG OFF] RackRelativePose disabled (MVP mode).")
 
         # ----------------------------------------------------
         # STABILITY SETTINGS
@@ -427,6 +475,7 @@ class DonutsAI:
     def process_frame(self, frame):
 
         height, width = frame.shape[:2]
+        rack_pose_data = None
 
         # ====================================================
         # FPS
@@ -649,32 +698,52 @@ class DonutsAI:
                 -1
             )
 
-            # =================================================
-            # MEDIAPIPE
-            # =================================================
+        # ====================================================
+        # MEDIAPIPE POSE  —  runs EVERY frame regardless of
+        #                     whether a bottle was detected.
+        # ====================================================
 
-            pose_start = time.perf_counter()
+        pose_start = time.perf_counter()
 
-            rgb = cv2.cvtColor(
-                frame,
-                cv2.COLOR_BGR2RGB
+        rgb = cv2.cvtColor(
+            frame,
+            cv2.COLOR_BGR2RGB
+        )
+
+        mp_image = mp.Image(
+            image_format=mp.ImageFormat.SRGB,
+            data=rgb
+        )
+
+        pose_result = (
+            self.landmarker.detect(
+                mp_image
             )
+        )
 
-            mp_image = mp.Image(
-                image_format=mp.ImageFormat.SRGB,
-                data=rgb
-            )
+        self.pose_ms = (
+            time.perf_counter() -
+            pose_start
+        ) * 1000
 
-            pose_result = (
-                self.landmarker.detect(
-                    mp_image
-                )
-            )
+        # ====================================================
+        # RACK RELATIVE POSE — only when bottle is detected
+        # ====================================================
 
-            self.pose_ms = (
-                time.perf_counter() -
-                pose_start
-            ) * 1000
+        if detected_box is not None:
+
+            # -------------------------------------------------
+            # RACK RELATIVE POSE (FEATURE FLAG CONTROLLED)
+            # -------------------------------------------------
+            if self.enable_rack_relative_pose and self.rack_relative_pose is not None:
+                if pose_result.pose_world_landmarks:
+                    rack_pose_data = self.rack_relative_pose.process_landmarks(
+                        pose_result.pose_world_landmarks[0]
+                    )
+                    if self.rack_relative_pose.visualize:
+                        frame = self.rack_relative_pose.draw_rack_relative_pose(
+                            frame, rack_pose_data
+                        )
 
             # =================================================
             # HAND POINTS
@@ -1031,7 +1100,8 @@ class DonutsAI:
             "next_step": (
                 self.experiment_controller.get_expected_step()
             ),
-            "fps": self.fps
+            "fps": self.fps,
+            "rack_relative_pose": rack_pose_data
         }
 
     # ========================================================

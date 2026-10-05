@@ -1,0 +1,20 @@
+{
+    "experiment": "Bottle Transfer",
+    "start_time": "2026-10-05T19:41:22.317299",
+    "end_time": null,
+    "status": "RUNNING",
+    "events": [
+        {
+            "timestamp": "2026-10-05T19:41:22.702851",
+            "activity": "APPROACHING",
+            "status": "OK",
+            "message": "APPROACHING accepted"
+        },
+        {
+            "timestamp": "2026-10-05T19:41:28.251127",
+            "activity": "PICKED",
+            "status": "OK",
+            "message": "PICKED accepted"
+        }
+    ]
+}

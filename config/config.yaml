@@ -1,0 +1,98 @@
+# ==============================================================
+# DONUTS — Global Configuration
+# ==============================================================
+
+# --------------------------------------------------------------
+# CAMERA
+# --------------------------------------------------------------
+camera:
+  source: 0                # int = webcam index, str = video file path or RTSP URL
+  width: 1280
+  height: 720
+  fps: 30
+  buffer_size: 1           # minimize camera buffer lag
+
+# --------------------------------------------------------------
+# DETECTION
+# --------------------------------------------------------------
+detection:
+  model: yolov8n.pt        # path relative to project root
+  confidence: 0.35
+  iou: 0.45
+  target_classes:          # YOLO class names to track; empty = all classes
+    - bottle
+  detection_confirm_frames: 3
+  max_missed_frames: 8
+  smoothing: 0.60
+
+# --------------------------------------------------------------
+# POSE ESTIMATION
+# --------------------------------------------------------------
+pose:
+  model: models/mediapipe/pose_landmarker_lite.task
+  min_detection_confidence: 0.5
+  min_presence_confidence: 0.5
+  min_tracking_confidence: 0.5
+  num_poses: 1
+
+# --------------------------------------------------------------
+# INTERACTION THRESHOLDS
+# --------------------------------------------------------------
+interaction:
+  approach_distance: 0.20      # normalized fraction of frame diagonal
+  pickup_distance_pixels: 120  # pixels
+  release_distance: 0.18       # normalized
+  movement_threshold: 0.035    # normalized
+  pickup_confirm_frames: 3
+  release_confirm_frames: 3
+
+# --------------------------------------------------------------
+# EXPERIMENT
+# --------------------------------------------------------------
+experiment:
+  config: config/experiment.json   # path relative to project root
+  step_timeout_seconds: 60         # max seconds per step before TIMEOUT alert
+
+# --------------------------------------------------------------
+# CALIBRATION
+# --------------------------------------------------------------
+calibration:
+  camera_file: data/camera_calibration.npz
+  rack_file: data/rack_calibration.npz
+  enable_rack_relative_pose: false  # feature flag
+
+# --------------------------------------------------------------
+# RECORDING
+# --------------------------------------------------------------
+recording:
+  enabled: false
+  save_annotated: true
+  output_dir: data/recordings
+  fourcc: mp4v
+  fps: 30
+
+# --------------------------------------------------------------
+# VOICE ALERTS
+# --------------------------------------------------------------
+alerts:
+  voice_enabled: true
+  voice_rate: 160        # words per minute
+  voice_volume: 1.0      # 0.0 to 1.0
+  cooldown_seconds: 5    # minimum seconds between identical alerts
+  async_speech: true     # non-blocking speech in background thread
+
+# --------------------------------------------------------------
+# LOGGING
+# --------------------------------------------------------------
+logging:
+  log_dir: data/experiment_logs
+  log_format: json       # json or jsonl
+  log_performance: true  # log FPS/latency statistics
+
+# --------------------------------------------------------------
+# PERFORMANCE
+# --------------------------------------------------------------
+performance:
+  target_fps: 30
+  show_fps_overlay: true
+  show_inference_times: true
