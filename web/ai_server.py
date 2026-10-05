@@ -23,6 +23,7 @@ if str(PROJECT_ROOT) not in sys.path:
 # ==========================================
 
 from dashboard.ai_engine import DonutsAI
+from event_logger import EventLogger
 
 
 print()
@@ -52,6 +53,11 @@ async def process_websocket(websocket: WebSocket):
 
     print(">>> WEB CLIENT CONNECTED")
 
+    # Session-level lock prevents the completed experiment from
+    # immediately restarting while the astronaut remains near the bottle.
+    session_locked = False
+    completed_response = None
+
     try:
 
         while True:
@@ -62,7 +68,7 @@ async def process_websocket(websocket: WebSocket):
 
             try:
 
-                data = await websocket.receive_bytes()
+                message = await websocket.receive()
 
             except WebSocketDisconnect:
 
@@ -78,10 +84,103 @@ async def process_websocket(websocket: WebSocket):
                 break
 
 
+            # ==================================
+            # TEXT COMMANDS FROM BROWSER
+            # ==================================
+
+            if "text" in message:
+
+                try:
+                    command = json.loads(message["text"])
+                except Exception:
+                    print(">>> WARNING: Invalid WebSocket command")
+                    continue
+
+                if command.get("type") == "reset_experiment":
+
+                    print()
+                    print("==========================================")
+                    print(">>> RESET COMMAND RECEIVED")
+                    print("==========================================")
+
+                    # Reset controller and activity recognizer.
+                    web_ai.experiment_controller.reset()
+                    web_ai.activity_recognizer.reset_cycle()
+
+                    # Reset AI state.
+                    web_ai.state = "IDLE"
+                    web_ai.activity_label = "WAITING"
+                    web_ai.activity_status = "WAITING"
+                    web_ai.controller_status = "READY"
+                    web_ai.controller_message = "WAITING FOR EXPERIMENT"
+
+                    # Reset detection/tracking state so the next
+                    # experiment starts cleanly.
+                    web_ai.detection_count = 0
+                    web_ai.missed_frames = 0
+                    web_ai.pickup_frames = 0
+                    web_ai.release_frames = 0
+                    web_ai.stable_box = None
+                    web_ai.smoothed_center = None
+                    web_ai.pickup_center = None
+
+                    # Start a fresh event log.
+                    web_ai.event_logger = EventLogger(
+                        web_ai.experiment_controller.experiment_name
+                    )
+
+                    # Unlock this browser session.
+                    session_locked = False
+                    completed_response = None
+
+                    print(">>> EXPERIMENT UNLOCKED")
+                    print(">>> READY FOR NEW EXPERIMENT")
+                    print("==========================================")
+
+                continue
+
+
+            # ==================================
+            # BINARY CAMERA FRAME
+            # ==================================
+
+            if "bytes" not in message:
+                continue
+
+            data = message["bytes"]
+
             print(
                 f">>> Received frame: {len(data)} bytes",
                 end="\r"
             )
+
+
+            # ==================================
+            # HOLD COMPLETED EXPERIMENT
+            # ==================================
+
+            if session_locked and completed_response is not None:
+
+                # Keep displaying the final completed frame/status, but
+                # do NOT call DonutsAI.process_frame() again. This prevents
+                # RELEASED -> IDLE from automatically starting a new cycle.
+                response = completed_response
+
+                try:
+                    await websocket.send_text(
+                        json.dumps(response)
+                    )
+                except WebSocketDisconnect:
+                    print()
+                    print(">>> WEB CLIENT DISCONNECTED")
+                    break
+                except Exception as error:
+                    print()
+                    print(">>> WEBSOCKET SEND ERROR:")
+                    print(error)
+                    break
+
+                continue
 
 
             # ==================================
@@ -238,6 +337,20 @@ async def process_websocket(websocket: WebSocket):
                         0
                     )
             }
+
+
+            # ==================================
+            # LOCK AFTER EXPERIMENT COMPLETION
+            # ==================================
+
+            if result.get("completed", False):
+
+                session_locked = True
+                completed_response = response
+
+                print()
+                print(">>> WEB SESSION LOCKED AFTER COMPLETION")
+                print(">>> WAITING FOR RESET COMMAND")
 
 
             # ==================================

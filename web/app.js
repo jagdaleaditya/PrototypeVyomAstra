@@ -1,6 +1,13 @@
 /* ==========================================
    DONUTS WEB DASHBOARD
    Camera + WebSocket AI Streaming
+   Includes:
+   - Webcam
+   - AI WebSocket streaming
+   - Live AI frame display
+   - Activity/step dashboard
+   - Experiment completion lock
+   - Reset Experiment command
 ========================================== */
 
 
@@ -8,35 +15,19 @@
    DOM ELEMENTS
 ========================================== */
 
-const camera =
-    document.getElementById("camera");
+const camera = document.getElementById("camera");
+const aiCanvas = document.getElementById("aiCanvas");
+const cameraPlaceholder = document.getElementById("cameraPlaceholder");
 
-const aiCanvas =
-    document.getElementById("aiCanvas");
+const startCamera = document.getElementById("startCamera");
+const resetButton = document.getElementById("resetButton");
 
-const cameraPlaceholder =
-    document.getElementById("cameraPlaceholder");
+const activity = document.getElementById("activity");
+const nextStep = document.getElementById("nextStep");
+const message = document.getElementById("message");
 
-const startCamera =
-    document.getElementById("startCamera");
-
-const resetButton =
-    document.getElementById("resetButton");
-
-const activity =
-    document.getElementById("activity");
-
-const nextStep =
-    document.getElementById("nextStep");
-
-const message =
-    document.getElementById("message");
-
-const connectionDot =
-    document.getElementById("connectionDot");
-
-const connectionText =
-    document.getElementById("connectionText");
+const connectionDot = document.getElementById("connectionDot");
+const connectionText = document.getElementById("connectionText");
 
 const experimentStatus =
     document.getElementById("experimentStatus");
@@ -54,26 +45,30 @@ const stepElements = [
 ========================================== */
 
 let cameraStream = null;
-
 let websocket = null;
 
 let captureCanvas = null;
 let captureContext = null;
 
 let sendingFrame = false;
-
 let aiRunning = false;
 
 let frameCounter = 0;
 
 
 /*
-   Expose WebSocket globally so Chrome
-   DevTools Console can inspect it.
+   Expose WebSocket globally.
 
-   Example:
+   You can check in Chrome console:
+
    donutsWebSocket.readyState
+
+   1 = OPEN
+   0 = CONNECTING
+   2 = CLOSING
+   3 = CLOSED
 */
+
 window.donutsWebSocket = null;
 
 
@@ -118,11 +113,10 @@ async function startWebcam() {
 
 
         /* ----------------------------------
-           Attach camera stream
+           Attach webcam
         ---------------------------------- */
 
-        camera.srcObject =
-            cameraStream;
+        camera.srcObject = cameraStream;
 
         await camera.play();
 
@@ -133,17 +127,19 @@ async function startWebcam() {
 
 
         /* ----------------------------------
-           UI
+           Update UI
         ---------------------------------- */
 
-        cameraPlaceholder.style.display =
-            "none";
+        if (cameraPlaceholder) {
 
-        camera.style.display =
-            "none";
+            cameraPlaceholder.style.display =
+                "none";
 
-        aiCanvas.style.display =
-            "block";
+        }
+
+        camera.style.display = "none";
+
+        aiCanvas.style.display = "block";
 
 
         /* ----------------------------------
@@ -173,7 +169,7 @@ async function startWebcam() {
 
 
         /* ----------------------------------
-           Connect AI
+           Connect Python AI
         ---------------------------------- */
 
         connectAI();
@@ -196,14 +192,14 @@ async function startWebcam() {
 
 
 /* ==========================================
-   WEBSOCKET
+   WEBSOCKET CONNECTION
 ========================================== */
 
 function connectAI() {
 
-    /* --------------------------------------
-       Prevent duplicate connections
-    -------------------------------------- */
+    /*
+       Prevent duplicate connections.
+    */
 
     if (
         websocket &&
@@ -218,11 +214,12 @@ function connectAI() {
         );
 
         return;
+
     }
 
 
     /* --------------------------------------
-       Select protocol
+       Select WebSocket protocol
     -------------------------------------- */
 
     const protocol =
@@ -254,13 +251,12 @@ function connectAI() {
     -------------------------------------- */
 
     websocket =
-        new WebSocket(
-            websocketURL
-        );
+        new WebSocket(websocketURL);
 
 
     /*
-       Make available in DevTools.
+       Make WebSocket accessible
+       from Chrome DevTools.
     */
 
     window.donutsWebSocket =
@@ -272,7 +268,7 @@ function connectAI() {
 
 
     /* ======================================
-       ON OPEN
+       WEBSOCKET OPEN
     ====================================== */
 
     websocket.onopen =
@@ -296,11 +292,19 @@ function connectAI() {
             );
 
 
-            connectionDot.style.background =
-                "#36d399";
+            if (connectionDot) {
 
-            connectionText.textContent =
-                "AI CONNECTED";
+                connectionDot.style.background =
+                    "#36d399";
+
+            }
+
+            if (connectionText) {
+
+                connectionText.textContent =
+                    "AI CONNECTED";
+
+            }
 
             message.textContent =
                 "DONUTS AI connected. Processing camera...";
@@ -314,7 +318,7 @@ function connectAI() {
 
 
             /*
-               Send first frame immediately.
+               Start frame stream.
             */
 
             sendNextFrame();
@@ -323,7 +327,7 @@ function connectAI() {
 
 
     /* ======================================
-       ON MESSAGE
+       WEBSOCKET MESSAGE
     ====================================== */
 
     websocket.onmessage =
@@ -335,8 +339,7 @@ function connectAI() {
 
 
             /*
-               Always release the frame lock
-               when a response arrives.
+               Previous frame has finished processing.
             */
 
             sendingFrame = false;
@@ -344,14 +347,8 @@ function connectAI() {
 
             try {
 
-                /* --------------------------
-                   Parse response
-                -------------------------- */
-
                 const result =
-                    JSON.parse(
-                        event.data
-                    );
+                    JSON.parse(event.data);
 
 
                 console.log(
@@ -359,15 +356,13 @@ function connectAI() {
                 );
 
 
-                /* --------------------------
+                /* --------------------------------
                    Update dashboard
-                -------------------------- */
+                -------------------------------- */
 
                 try {
 
-                    updateDashboard(
-                        result
-                    );
+                    updateDashboard(result);
 
                 }
 
@@ -381,15 +376,13 @@ function connectAI() {
                 }
 
 
-                /* --------------------------
-                   Display processed frame
-                -------------------------- */
+                /* --------------------------------
+                   Display processed AI frame
+                -------------------------------- */
 
                 try {
 
-                    displayAIFrame(
-                        result.frame
-                    );
+                    displayAIFrame(result.frame);
 
                 }
 
@@ -404,11 +397,10 @@ function connectAI() {
 
 
                 /*
-                   Continue processing.
+                   Continue streaming.
 
-                   Small delay prevents the browser
-                   from immediately hammering the
-                   Python server.
+                   50 ms delay prevents the browser
+                   from hammering the Python backend.
                 */
 
                 if (
@@ -418,12 +410,7 @@ function connectAI() {
                 ) {
 
                     setTimeout(
-                        function () {
-
-                            sendNextFrame();
-
-                        },
-
+                        sendNextFrame,
                         50
                     );
 
@@ -440,8 +427,8 @@ function connectAI() {
 
 
                 /*
-                   Even if JSON/dashboard processing
-                   fails, try to continue the stream.
+                   Try to continue even if one
+                   response is malformed.
                 */
 
                 if (
@@ -451,12 +438,7 @@ function connectAI() {
                 ) {
 
                     setTimeout(
-                        function () {
-
-                            sendNextFrame();
-
-                        },
-
+                        sendNextFrame,
                         100
                     );
 
@@ -468,7 +450,7 @@ function connectAI() {
 
 
     /* ======================================
-       ON ERROR
+       WEBSOCKET ERROR
     ====================================== */
 
     websocket.onerror =
@@ -482,20 +464,26 @@ function connectAI() {
                 ">>> DONUTS WEBSOCKET ERROR"
             );
 
-            console.error(
-                error
-            );
+            console.error(error);
 
             console.error(
                 "=========================================="
             );
 
 
-            connectionDot.style.background =
-                "#e5484d";
+            if (connectionDot) {
 
-            connectionText.textContent =
-                "AI CONNECTION ERROR";
+                connectionDot.style.background =
+                    "#e5484d";
+
+            }
+
+            if (connectionText) {
+
+                connectionText.textContent =
+                    "AI CONNECTION ERROR";
+
+            }
 
             message.textContent =
                 "Unable to connect to DONUTS AI.";
@@ -504,7 +492,7 @@ function connectAI() {
 
 
     /* ======================================
-       ON CLOSE
+       WEBSOCKET CLOSE
     ====================================== */
 
     websocket.onclose =
@@ -543,16 +531,24 @@ function connectAI() {
             sendingFrame = false;
 
 
-            connectionDot.style.background =
-                "#e5484d";
+            if (connectionDot) {
 
-            connectionText.textContent =
-                "AI OFFLINE";
+                connectionDot.style.background =
+                    "#e5484d";
+
+            }
+
+            if (connectionText) {
+
+                connectionText.textContent =
+                    "AI OFFLINE";
+
+            }
 
 
             /*
-               Keep the object available for
-               Chrome DevTools inspection.
+               Keep WebSocket accessible
+               for Chrome DevTools.
             */
 
             window.donutsWebSocket =
@@ -564,13 +560,13 @@ function connectAI() {
 
 
 /* ==========================================
-   SEND FRAME
+   SEND NEXT FRAME
 ========================================== */
 
 function sendNextFrame() {
 
     /* --------------------------------------
-       Basic checks
+       AI must be running
     -------------------------------------- */
 
     if (!aiRunning) {
@@ -580,8 +576,13 @@ function sendNextFrame() {
         );
 
         return;
+
     }
 
+
+    /* --------------------------------------
+       WebSocket must exist
+    -------------------------------------- */
 
     if (!websocket) {
 
@@ -590,8 +591,13 @@ function sendNextFrame() {
         );
 
         return;
+
     }
 
+
+    /* --------------------------------------
+       WebSocket must be OPEN
+    -------------------------------------- */
 
     if (
         websocket.readyState !== WebSocket.OPEN
@@ -603,12 +609,16 @@ function sendNextFrame() {
         );
 
         return;
+
     }
 
 
     /*
-       Do not send another frame while Python
-       is processing the previous frame.
+       Only one frame at a time.
+
+       This is important because Python AI
+       processing can take longer than the
+       browser capture interval.
     */
 
     if (sendingFrame) {
@@ -618,12 +628,13 @@ function sendNextFrame() {
         );
 
         return;
+
     }
 
 
-    /*
-       Camera may not have dimensions yet.
-    */
+    /* --------------------------------------
+       Check camera dimensions
+    -------------------------------------- */
 
     if (
         !camera.videoWidth ||
@@ -640,11 +651,12 @@ function sendNextFrame() {
         );
 
         return;
+
     }
 
 
     /* --------------------------------------
-       Lock frame
+       Lock current frame
     -------------------------------------- */
 
     sendingFrame = true;
@@ -670,20 +682,17 @@ function sendNextFrame() {
 
         captureCanvas.width,
         captureCanvas.height
+
     );
 
 
     /* --------------------------------------
-       Convert to JPEG
+       Convert frame to JPEG
     -------------------------------------- */
 
     captureCanvas.toBlob(
 
         function (blob) {
-
-            /*
-               Blob creation failed.
-            */
 
             if (!blob) {
 
@@ -699,12 +708,13 @@ function sendNextFrame() {
                 );
 
                 return;
+
             }
 
 
             /*
                WebSocket may have closed while
-               toBlob was running.
+               toBlob() was running.
             */
 
             if (
@@ -719,14 +729,14 @@ function sendNextFrame() {
                 sendingFrame = false;
 
                 return;
+
             }
 
 
             try {
 
-                websocket.send(
-                    blob
-                );
+                websocket.send(blob);
+
 
                 console.log(
                     `>>> DONUTS: Frame #${frameCounter} sent (${blob.size} bytes)`
@@ -750,6 +760,7 @@ function sendNextFrame() {
         "image/jpeg",
 
         0.65
+
     );
 
 }
@@ -759,9 +770,7 @@ function sendNextFrame() {
    DISPLAY AI FRAME
 ========================================== */
 
-function displayAIFrame(
-    base64Frame
-) {
+function displayAIFrame(base64Frame) {
 
     if (!base64Frame) {
 
@@ -770,6 +779,7 @@ function displayAIFrame(
         );
 
         return;
+
     }
 
 
@@ -793,6 +803,7 @@ function displayAIFrame(
 
                 aiCanvas.width,
                 aiCanvas.height
+
             );
 
         };
@@ -820,9 +831,7 @@ function displayAIFrame(
    UPDATE DASHBOARD
 ========================================== */
 
-function updateDashboard(
-    result
-) {
+function updateDashboard(result) {
 
     /* --------------------------------------
        Current activity
@@ -837,17 +846,16 @@ function updateDashboard(
 
 
     /* --------------------------------------
-       Next step
+       Next expected step
     -------------------------------------- */
 
     if (result.next_step) {
 
         nextStep.textContent =
-            result.next_step
-                .replaceAll(
-                    "_",
-                    " "
-                );
+            result.next_step.replaceAll(
+                "_",
+                " "
+            );
 
     }
 
@@ -870,8 +878,7 @@ function updateDashboard(
     }
 
     else if (
-        result.controller_status ===
-        "WARNING"
+        result.controller_status === "WARNING"
     ) {
 
         experimentStatus.textContent =
@@ -924,6 +931,10 @@ function updateDashboard(
             );
 
 
+            /*
+               Completed steps
+            */
+
             if (
                 index < currentStep
             ) {
@@ -933,6 +944,11 @@ function updateDashboard(
                 );
 
             }
+
+
+            /*
+               Current active step
+            */
 
             else if (
                 index === currentStep &&
@@ -972,17 +988,77 @@ function updateDashboard(
 
 function resetExperiment() {
 
+    console.log(
+        ">>> DONUTS: Reset experiment requested"
+    );
+
+
+    /* --------------------------------------
+       Reset browser UI immediately
+    -------------------------------------- */
+
     activity.textContent =
         "WAITING";
+
 
     nextStep.textContent =
         "APPROACH BOTTLE";
 
+
     experimentStatus.textContent =
         "READY";
 
+
     message.textContent =
-        "Experiment reset.";
+        "Ready for a new experiment.";
+
+
+    /* --------------------------------------
+       Send reset command to Python AI
+    -------------------------------------- */
+
+    if (
+        window.donutsWebSocket &&
+        window.donutsWebSocket.readyState === WebSocket.OPEN
+    ) {
+
+        try {
+
+            window.donutsWebSocket.send(
+
+                JSON.stringify({
+
+                    type: "reset_experiment"
+
+                })
+
+            );
+
+
+            console.log(
+                ">>> DONUTS: Reset command sent to AI"
+            );
+
+        }
+
+        catch (error) {
+
+            console.error(
+                ">>> DONUTS RESET ERROR:",
+                error
+            );
+
+        }
+
+    }
+
+    else {
+
+        console.warn(
+            ">>> DONUTS: AI WebSocket is not connected"
+        );
+
+    }
 
 }
 
@@ -991,22 +1067,24 @@ function resetExperiment() {
    BUTTON EVENTS
 ========================================== */
 
-startCamera.addEventListener(
+if (startCamera) {
 
-    "click",
+    startCamera.addEventListener(
+        "click",
+        startWebcam
+    );
 
-    startWebcam
-
-);
+}
 
 
-resetButton.addEventListener(
+if (resetButton) {
 
-    "click",
+    resetButton.addEventListener(
+        "click",
+        resetExperiment
+    );
 
-    resetExperiment
-
-);
+}
 
 
 /* ==========================================
@@ -1029,6 +1107,10 @@ window.addEventListener(
         sendingFrame = false;
 
 
+        /* ----------------------------------
+           Close WebSocket
+        ---------------------------------- */
+
         if (websocket) {
 
             try {
@@ -1039,14 +1121,16 @@ window.addEventListener(
 
             catch (error) {
 
-                console.error(
-                    error
-                );
+                console.error(error);
 
             }
 
         }
 
+
+        /* ----------------------------------
+           Stop webcam
+        ---------------------------------- */
 
         if (cameraStream) {
 
@@ -1054,8 +1138,11 @@ window.addEventListener(
                 .getTracks()
                 .forEach(
 
-                    track =>
-                        track.stop()
+                    function (track) {
+
+                        track.stop();
+
+                    }
 
                 );
 
@@ -1088,6 +1175,10 @@ console.log(
 
 console.log(
     ">>> Frame streaming system ready"
+);
+
+console.log(
+    ">>> Experiment reset system ready"
 );
 
 console.log(
